@@ -34,11 +34,19 @@ You have deep expertise in:
 - D2C and SMB brand marketing in India
 - Influencer/creator marketing in regional language markets
 
+CRITICAL INSTRUCTIONS FOR PREDICTIONS:
+- You will be provided with REAL INDUSTRY BENCHMARKS (CPM, CPC, CTR, ROAS, conversion rates)
+- You MUST use these benchmarks to CALCULATE predictions, not guess them
+- Show your math: CPM ÷ (CTR × Conversion Rate) = estimated CAC
+- Provide ranges (low-mid-high) with confidence levels
+- If benchmark data is available, confidence should be 70-90%
+- If no benchmarks match, confidence should be 40-60% and flag this
+
 Your output must be:
-- Data-driven: ground recommendations in the provided performance data
+- Data-driven: ground ALL numbers in the provided benchmarks
 - Culturally authentic: not translated English, but natively conceived regional content
 - Actionable: specific enough that a marketing team can execute immediately
-- Honest: flag uncertainties, don't over-promise on predictions
+- Honest: show confidence levels, flag when data is thin, don't over-promise
 
 Always respond in structured JSON format as specified in each prompt."""
 
@@ -171,6 +179,15 @@ BRAND ANALYSIS (from previous step):
 {meta_context}
 {competitor_context}
 
+INDUSTRY BENCHMARKS (USE THESE FOR ALL CALCULATIONS):
+{str(getattr(request, '_benchmarks', {}).get('industry', 'No benchmarks available'))}
+
+REGIONAL MARKET DATA (REAL CPM/ENGAGEMENT DATA):
+{str(getattr(request, '_benchmarks', {}).get('regional', 'No regional data available'))}
+
+SEASONAL CONTEXT (CURRENT MONTH):
+{str(getattr(request, '_benchmarks', {}).get('seasonal', 'No seasonal data'))}
+
 PRODUCT SCOPE: {request.scope.value}
 SCOPE INSTRUCTION: {scope_instruction}
 TARGET LANGUAGES: {', '.join(l.display_name for l in request.target_languages)}
@@ -257,8 +274,30 @@ CAMPAIGN GOAL: {request.campaign_goal}
 BRAND ANALYSIS: {str(brand_analysis)}
 MARKET INTELLIGENCE: {str(market_intelligence)}
 
+INDUSTRY BENCHMARKS (USE THESE FOR ALL PREDICTIONS — DO NOT GUESS):
+{str(getattr(request, '_benchmarks', {}).get('industry', 'No benchmarks'))}
+
+REGIONAL CPM DATA (USE FOR BUDGET SPLIT CALCULATIONS):
+{str(getattr(request, '_benchmarks', {}).get('regional', 'No regional data'))}
+
+SEASONAL FACTORS:
+{str(getattr(request, '_benchmarks', {}).get('seasonal', 'No seasonal data'))}
+
+CREATOR RATE CARDS:
+{str(getattr(request, '_benchmarks', {}).get('creator_strategy', 'No creator data'))}
+
 HISTORICAL META PERFORMANCE:
-{f'Average CAC: ₹{request.meta_ads_data.avg_cac:.0f}, ROAS: {request.meta_ads_data.avg_roas:.1f}x' if request.meta_ads_data else 'No historical data available — use industry benchmarks for Indian D2C brands'}
+{f'Average CAC: ₹{request.meta_ads_data.avg_cac:.0f}, ROAS: {request.meta_ads_data.avg_roas:.1f}x' if request.meta_ads_data else 'No historical data — USE THE INDUSTRY BENCHMARKS ABOVE to calculate predictions'}
+
+CRITICAL: For each scenario (conservative/moderate/aggressive), SHOW YOUR MATH:
+- Use the CPM benchmarks for each format (Reels, Feed, Stories, Carousel)
+- Calculate: impressions = budget ÷ (CPM ÷ 1000)
+- Calculate: clicks = impressions × CTR
+- Calculate: conversions = clicks × conversion_rate
+- Calculate: CAC = budget ÷ conversions
+- Calculate: ROAS = (conversions × avg_order_value) ÷ budget
+- Apply seasonal CPM adjustments if relevant
+- Apply regional CPM differences for budget allocation
 
 {scope_rules}
 
@@ -418,8 +457,20 @@ PRODUCTS: {products_str}
 PRODUCT NICHES: {', '.join(niches_needed)}
 MONTHLY BUDGET FOR CREATORS: ~10% of ₹{request.monthly_budget:,.0f} = ₹{request.monthly_budget * 0.1:,.0f}
 
+REAL CREATOR RATE CARDS BY LANGUAGE (USE THESE FOR COST ESTIMATES):
+{str(getattr(request, '_benchmarks', {}).get('creator_strategy', 'No creator data'))}
+
+REGIONAL CREATOR RATES:
+{str({k: v.get('creator_rates', 'N/A') for k, v in getattr(request, '_benchmarks', {}).get('regional', {}).items()})}
+
 CREATIVE BRIEFS SUMMARY:
 {str([b.get('language_name', '') + ': ' + str([c.get('concept_name', '') for c in b.get('creative_concepts', [])]) for b in creative_briefs])}
+
+CRITICAL INSTRUCTIONS:
+- Use the REAL rate cards above to estimate costs — DO NOT make up prices
+- Calculate how many creators the budget can afford per language
+- Recommend the best ROI tier (micro-influencers typically best)
+- Factor in engagement rate benchmarks from the data above
 
 MATCHING CRITERIA (weighted):
 - Language-market fit: 30% (creator's primary language matches target market)
