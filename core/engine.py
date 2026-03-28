@@ -25,6 +25,7 @@ from prompts.chains import (
     build_creator_matching_prompt,
     build_synthesis_prompt
 )
+from data.benchmarks import get_benchmarks_for_request, detect_industry, META_ADS_BENCHMARKS, REGIONAL_DATA
 
 
 class AIClient:
@@ -117,6 +118,18 @@ class StrategyEngine:
 
         is_free = request.tier == PlanTier.FREE
         total_steps = 6 if not is_free else 4  # free skips creatives + creators detail
+
+        # ── Load real benchmarks ─────────────────────────────────
+        products_dicts = [{"name": p.name, "category": p.category, "description": p.description} for p in request.products]
+        lang_codes = [l.value for l in request.target_languages]
+        benchmarks = get_benchmarks_for_request(
+            products=products_dicts,
+            target_languages=lang_codes,
+            company_name=request.company_name,
+            campaign_goal=request.campaign_goal
+        )
+        # Attach benchmarks to request for prompt builders to use
+        request._benchmarks = benchmarks
 
         def notify(step_name: str, step_num: int):
             if on_step:
